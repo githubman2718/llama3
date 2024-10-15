@@ -295,7 +295,13 @@ class Transformer(nn.Module):
                 [torch.zeros((seqlen, start_pos), device=tokens.device), mask]
             ).type_as(h)
 
-        for layer in self.layers:
+        # Do not run the final layer when processing the prompt
+        if seqlen > 1:
+            layers_to_run = self.layers[:-1]  # Exclude the final layer
+        else:
+            layers_to_run = self.layers  # Include all layers
+    
+        for layer in layers_to_run:
             h = layer(h, start_pos, freqs_cis, mask)
         h = self.norm(h)
         output = self.output(h).float()
